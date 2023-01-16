@@ -1,5 +1,6 @@
 // make the .env file availabel with the process.env
 require("dotenv").config();
+const mongoose = require("mongoose");
 const express = require("express");
 const cors = require("cors");
 
@@ -7,6 +8,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static("build"));
+
+const url = process.env.MONGODB_URI;
+const PORT = process.env.PORT;
+
 const Note = require("./models/note");
 
 let notes = [
@@ -90,7 +95,15 @@ app.post("/api/notes", (request, response) => {
   response.json(note);
 });
 
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
-  console.log(`Server running on port: ${PORT}`);
-});
+console.log("connecting to ", url);
+mongoose
+  .connect(url)
+  .then((result) => {
+    console.log("connected to MongoDB");
+    app.listen(PORT, () => {
+      console.log(`Server running on port: ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.log("error connecting to MongoDB: ", err.message);
+  });
