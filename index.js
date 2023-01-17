@@ -79,34 +79,34 @@ app.delete("/api/notes/:id", (request, response, next) => {
     });
 });
 
-app.post("/api/notes", (request, response) => {
+app.post("/api/notes", (request, response, next) => {
   const body = request.body;
 
-  if (!body.content) {
-    return response.status(400).json({
-      error: "content missing",
-    });
-  }
-
+  // the validator on the schema will handle the wrong content
   const note = new Note({
     content: body.content,
     important: body.important || false,
     date: new Date(),
   });
 
-  note.save().then((savedNote) => {
-    response.json(savedNote);
-  });
+  note
+    .save()
+    .then((savedNote) => {
+      response.json(savedNote);
+    })
+    .catch((error) => next(error));
 });
 
+// by default the validator not run automatically in the findOneByIdAndUpdate so we will force it to work here
 app.put("/api/notes/:id", (request, response, next) => {
   const id = request.params.id;
-  const body = request.body;
-  const note = {
-    content: body.content,
-    important: body.important,
-  };
-  Note.findByIdAndUpdate(id, note, { new: true }) // new is to returned the updated note not the original by default
+  const { content, important } = request.body;
+
+  Note.findByIdAndUpdate(
+    id,
+    { content, important },
+    { new: true, runValidators: true, context: "query" }
+  ) // new is to returned the updated note not the original by default
     .then((updatedNote) => {
       response.json(updatedNote);
     })
@@ -120,15 +120,17 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint);
 
 // custom error handler
-const errorHander = (error, request, response, next) => {
+const errorHandler = (error, request, response, next) => {
   console.log(error.message);
   if (error.name === "CastError") {
     return response.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
   }
   next(error);
 };
 
-app.use(errorHander);
+app.use(errorHandler);
 
 console.log("connecting to ", url);
 mongoose
