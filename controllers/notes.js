@@ -30,7 +30,7 @@ notesRouter.delete('/:id', (request, response, next) => {
     })
 })
 
-notesRouter.post('/', (request, response, next) => {
+notesRouter.post('/', async(request, response) => {
   const body = request.body
   // the validator on the schema will handle the wrong content
   const note = new Note({
@@ -39,12 +39,8 @@ notesRouter.post('/', (request, response, next) => {
     date: new Date(),
   })
 
-  note
-    .save()
-    .then((savedNote) => {
-      response.status(201).json(savedNote)
-    })
-    .catch((error) => next(error))
+  const savedNote = await note.save()
+  response.status(201).json(savedNote)
 })
 
 // by default the validator not run automatically in the findOneByIdAndUpdate so we will force it to work here
