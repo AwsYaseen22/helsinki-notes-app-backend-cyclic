@@ -9,10 +9,9 @@ const api = supertest(app)
 
 beforeEach(async() => {
   await Note.deleteMany({})
-  let noteObject = new Note(helper.initialNotes[0])
-  await noteObject.save()
-  noteObject = new Note(helper.initialNotes[1])
-  await noteObject.save()
+  const notesObjects = helper.initialNotes.map(note => new Note(note))
+  const promiseArray = notesObjects.map(note => note.save())
+  await Promise.all(promiseArray)
 })
 
 describe('Test notes api',() => {
