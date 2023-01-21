@@ -6,31 +6,23 @@ notesRouter.get('/', async(request, response) => {
   response.json(notes)
 })
 
-notesRouter.get('/:id', async(request, response, next) => {
+notesRouter.get('/:id', async(request, response) => {
   const id = request.params.id
-  try {
-    const note = await Note.findById(id)
-    if (note) {
-      response.json(note)
-    } else {
-      response.status(404).end()
-    }
-  } catch (exception) {
-    next(exception)
+  const note = await Note.findById(id)
+  if (note) {
+    response.json(note)
+  } else {
+    response.status(404).end()
   }
 })
 
-notesRouter.delete('/:id', async(request, response, next) => {
+notesRouter.delete('/:id', async(request, response) => {
   const id = request.params.id
-  try {
-    await Note.findByIdAndRemove(id)
-    response.status(204).end()
-  } catch (exception) {
-    next(exception)
-  }
+  await Note.findByIdAndRemove(id)
+  response.status(204).end()
 })
 
-notesRouter.post('/', async(request, response, next) => {
+notesRouter.post('/', async(request, response) => {
   const body = request.body
   // the validator on the schema will handle the wrong content
   const note = new Note({
@@ -38,28 +30,21 @@ notesRouter.post('/', async(request, response, next) => {
     important: body.important || false,
     date: new Date(),
   })
-  try {
-    const savedNote = await note.save()
-    response.status(201).json(savedNote)
-  } catch (exception) {
-    next(exception)
-  }
+  const savedNote = await note.save()
+  response.status(201).json(savedNote)
+
 })
 
 // by default the validator not run automatically in the findOneByIdAndUpdate so we will force it to work here
-notesRouter.put('/:id', async(request, response, next) => {
+notesRouter.put('/:id', async(request, response) => {
   const id = request.params.id
   const { content, important } = request.body
-  try {
-    const updatedNote = await Note.findByIdAndUpdate(
-      id,
-      { content, important },
-      { new: true, runValidators: true, context: 'query' }
-    ) // new is to returned the updated note not the original by default
-    response.json(updatedNote)
-  } catch (exception) {
-    next(exception)
-  }
+  const updatedNote = await Note.findByIdAndUpdate(
+    id,
+    { content, important },
+    { new: true, runValidators: true, context: 'query' }
+  ) // new is to returned the updated note not the original by default
+  response.json(updatedNote)
 })
 
 module.exports = notesRouter
