@@ -8,6 +8,10 @@ const noteSchema = new mongoose.Schema({
   },
   date: Date,
   important: Boolean,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
 })
 
 // make the id as a string not object and remove the v property
