@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken')
 const notesRouter = require('express').Router()
 const Note = require('../models/note')
 const User = require('../models/user')
@@ -23,9 +24,22 @@ notesRouter.delete('/:id', async(request, response) => {
   response.status(204).end()
 })
 
+const getTokenFrom = request => {
+  const authorization = request.get('authorization')
+  if(authorization && authorization.toLowerCase().startsWith('bearer ')){
+    return authorization.substring(7)
+  }
+  return null
+}
+
 notesRouter.post('/', async(request, response) => {
   const body = request.body
-  const user = await User.findById(body.userId)
+  const token = getTokenFrom(request)
+  const decodedToken = jwt.verify(token, process.env.SECRET)
+  if(!decodedToken){
+    return response.status(401).json({ erro: 'token missing or invalid' })
+  }
+  const user = await User.findById(decodedToken.id)
   // the validator on the schema will handle the wrong content
   const note = new Note({
     content: body.content,
